@@ -8,8 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 class Evento extends Model
 {
     use HasFactory;
-    protected $primaryKey = 'id';
+
+    // Especificar a tabela associada ao modelo
     protected $table = 'eventos';
+
+    // Especificar a chave primária
+    protected $primaryKey = 'id';
+
+    // Definir os campos que podem ser preenchidos em massa (mass assignment)
     protected $fillable = [
         'nome_evento',
         'descricao',
@@ -23,6 +29,14 @@ class Evento extends Model
         'usuarios_confirmados',
         'usuarios_interessados',
         'destaque',
-        'data_criacao',
     ];
+
+    // Laravel gerencia automaticamente created_at e updated_at
+    public $timestamps = true;
+
+    // Definir a relação com o modelo Usuario (assumindo que id_divulgador seja uma foreign key)
+    public function divulgador()
+    {
+        return $this->belongsTo(Usuario::class, 'id_divulgador', 'id');
+    }
 }

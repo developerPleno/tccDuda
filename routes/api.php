@@ -1,17 +1,17 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UsuarioController;
+
 use App\Http\Controllers\UsuarioConfirmadoInteressadoController;
 use App\Http\Controllers\TagDivulgadorController;
 use App\Http\Controllers\PreferenciaUsuarioController;
 use App\Http\Controllers\EventoController;
-use app\http\controllers\InteressadoController;
+use App\Http\Controllers\InteressadoController;
 use App\Http\Controllers\EnderecoEventoController;
-use app\Http\Controllers\ConfirmadoController;
+use App\Http\Controllers\ConfirmadoController;
 use App\Http\Controllers\EventoDestaqueController;
+use App\Http\Controllers\UsuarioController;
 
-Route::prefix('api')->group(function () {
   Route::get('/usuarios', [UsuarioController::class, 'index']);
   Route::get('/usuarios/{id}', [UsuarioController::class, 'show']);
   Route::post('/usuarios', [UsuarioController::class, 'store']);
@@ -69,4 +69,4 @@ Route::prefix('api')->group(function () {
   Route::post('/eventos/{id_evento}/confirmados', [ConfirmadoController::class, 'store']);
   Route::delete('/eventos/{id_evento}/confirmados/{id_usuario}', [ConfirmadoController::class, 'destroy']);
   Route::get('/eventos/{id_evento}/contar-confirmados', [ConfirmadoController::class, 'contarConfirmados']);
-});
+
