@@ -36,12 +36,20 @@ class UsuarioController extends Controller
             'senha' => 'required|string|min:6',
             'cidade' => 'required|string|max:255',
             'tipo_usuario' => 'required|string',
+            'genero' => 'required|in:masculino,feminino,outros',
+            'data_nascimento' => 'required|date',
             'foto_perfil' => 'nullable|string',
+            'pacote_destaque_ativo' => 'nullable|boolean', // Novo campo para divulgadores
         ]);
 
         // Hashing the password
         $validatedData['senha'] = Hash::make($validatedData['senha']);
         $validatedData['data_criacao'] = now();
+
+        // Se o tipo de usuário for divulgador, definir o pacote de destaque
+        if ($validatedData['tipo_usuario'] === 'divulgador') {
+            $validatedData['pacote_destaque_ativo'] = $request->input('pacote_destaque_ativo', false); // Valor padrão: false
+        }
 
         $usuario = Usuario::create($validatedData);
 
@@ -63,7 +71,10 @@ class UsuarioController extends Controller
             'senha' => 'sometimes|string|min:6',
             'cidade' => 'sometimes|string|max:255',
             'tipo_usuario' => 'sometimes|string',
+            'genero' => 'sometimes|in:masculino,feminino,outros',
+            'data_nascimento' => 'sometimes|date',
             'foto_perfil' => 'nullable|string',
+            'pacote_destaque_ativo' => 'nullable|boolean', // Atualiza pacote destaque se for divulgado
             'excluir_conta' => 'nullable|boolean',
         ]);
 

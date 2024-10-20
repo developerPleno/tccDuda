@@ -33,32 +33,37 @@ class UsuarioConfirmadoInteressadoController extends Controller
             'id_evento' => 'required|integer',
             'id_usuario' => 'required|integer',
             'status' => 'required|in:interessado,confirmado', // Verificação para os status 'interessado' ou 'confirmado'
-            'data' => 'required|date',
         ]);
-
+    
+        // Adiciona a data e hora atual automaticamente
+        $validatedData['data'] = now();
+    
+        // Cria o registro com os dados validados
         $registro = UsuarioConfirmadoInteressado::create($validatedData);
-
-        return response()->json($registro, 201); // Retorna o código 201 de sucesso
+    
+        return response()->json($registro, 201);  // Código 201 indica criação bem-sucedida
     }
 
     // Atualizar um registro existente
     public function update(Request $request, $id)
     {
         $registro = UsuarioConfirmadoInteressado::find($id);
-
+    
         if (!$registro) {
             return response()->json(['message' => 'Registro não encontrado'], 404);
         }
-
+    
         $validatedData = $request->validate([
             'id_evento' => 'sometimes|integer',
             'id_usuario' => 'sometimes|integer',
             'status' => 'sometimes|in:interessado,confirmado',
-            'data' => 'sometimes|date',
         ]);
-
+    
+        // Adiciona a data e hora atual automaticamente
+        $validatedData['data'] = now();
+    
         $registro->update($validatedData);
-
+    
         return response()->json($registro);
     }
 

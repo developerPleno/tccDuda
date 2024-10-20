@@ -20,10 +20,22 @@ class Usuario extends Model
         'email',
         'senha',
         'cidade',
+        'genero',
+        'data_nascimento',
+        'pacote_destaque_ativo',
         'tipo_usuario',
         'foto_perfil',
-        'data_criacao'
+        'data_criacao',
+        'pacote_destaque_ativo',
+        'eventos_destaque_restantes', // Quantidade de destaques permitidos no mês
+        'data_expiracao_pacote', // Quando o pacote expira
     ];
+
+    // Função para verificar se o pacote de destaques está ativo
+    public function pacoteAtivo()
+    {
+        return $this->pacote_destaque_ativo && $this->data_expiracao_pacote >= now();
+    }
 
     protected $dates = ['deleted_at'];  // Adiciona o campo deleted_at às datas que serão manipuladas
 

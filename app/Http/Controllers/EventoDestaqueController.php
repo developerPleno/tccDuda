@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\EventoDestaque;
+use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -20,24 +21,50 @@ class EventoDestaqueController extends Controller
     {
         $validatedData = $request->validate([
             'id_evento' => 'required|integer',
+            'id_usuario' => 'required|integer',
         ]);
 
-        $dataAtual = Carbon::now()->startOfMonth();  // Data atual no início do mês
+        $usuario = Usuario::find($validatedData['id_usuario']);
 
-        // Verificar se já existe um evento em destaque para o mês atual
-        $eventoExistente = EventoDestaque::where('data_destaque', '>=', $dataAtual)
-            ->where('id_evento', $validatedData['id_evento'])
-            ->first();
-
-        if ($eventoExistente) {
-            return response()->json(['message' => 'Já existe um evento em destaque neste mês'], 400);
+        // Verificar se o usuário existe
+        if (!$usuario) {
+            return response()->json(['message' => 'Usuário não encontrado'], 404);
         }
 
-        // Adicionar o evento como destaque
+        // Verificar se o usuário tem um pacote ativo
+        if ($usuario->pacoteAtivo()) {
+            // Verificar quantos eventos já foram destacados no mês
+            $eventosDestacados = EventoDestaque::where('id_usuario', $usuario->id)
+                ->whereMonth('data_destaque', Carbon::now()->month)
+                ->count();
+
+            // Se o limite de eventos do pacote foi atingido
+            if ($eventosDestacados >= $usuario->eventos_destaque_restantes) {
+                return response()->json(['message' => 'Você já destacou todos os eventos permitidos pelo seu pacote neste mês.'], 403);
+            }
+        } else {
+            // Verificar se o usuário já destacou um evento no mês, caso não tenha um pacote ativo
+            $eventoDestaqueMes = EventoDestaque::where('id_usuario', $usuario->id)
+                ->whereMonth('data_destaque', Carbon::now()->month)
+                ->first();
+
+            if ($eventoDestaqueMes) {
+                return response()->json(['message' => 'Você já destacou um evento este mês.'], 403);
+            }
+        }
+
+        // Criar o destaque para o evento
         $eventoDestaque = EventoDestaque::create([
             'id_evento' => $validatedData['id_evento'],
+            'id_usuario' => $validatedData['id_usuario'],
             'data_destaque' => now(),
         ]);
+
+        // Atualizar o número de eventos restantes do pacote, se o usuário tiver um pacote ativo
+        if ($usuario->pacoteAtivo()) {
+            $usuario->eventos_destaque_restantes -= 1;
+            $usuario->save();
+        }
 
         return response()->json($eventoDestaque, 201);  // Código 201 para criação bem-sucedida
     }
