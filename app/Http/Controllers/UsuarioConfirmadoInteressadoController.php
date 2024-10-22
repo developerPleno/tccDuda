@@ -3,81 +3,69 @@
 namespace App\Http\Controllers;
 
 use App\Models\UsuarioConfirmadoInteressado;
+use App\Models\Evento;
 use Illuminate\Http\Request;
 
 class UsuarioConfirmadoInteressadoController extends Controller
 {
-    // Listar todos os registros de usuários confirmados/interessados
-    public function index()
-    {
-        $usuariosConfirmadosInteressados = UsuarioConfirmadoInteressado::all();
-        return response()->json($usuariosConfirmadosInteressados);
-    }
-
-    // Exibir um registro específico por ID
-    public function show($id)
-    {
-        $registro = UsuarioConfirmadoInteressado::find($id);
-
-        if (!$registro) {
-            return response()->json(['message' => 'Registro não encontrado'], 404);
-        }
-
-        return response()->json($registro);
-    }
-
-    // Criar um novo registro de usuário interessado ou confirmado
+    // Função para criar um novo registro de usuário interessado ou confirmado
     public function store(Request $request)
     {
         $validatedData = $request->validate([
             'id_evento' => 'required|integer',
             'id_usuario' => 'required|integer',
-            'status' => 'required|in:interessado,confirmado', // Verificação para os status 'interessado' ou 'confirmado'
+            'status' => 'required|in:interessado,confirmado',
         ]);
-    
+
         // Adiciona a data e hora atual automaticamente
         $validatedData['data'] = now();
-    
+
         // Cria o registro com os dados validados
         $registro = UsuarioConfirmadoInteressado::create($validatedData);
-    
-        return response()->json($registro, 201);  // Código 201 indica criação bem-sucedida
+
+        // Atualizar a contagem na tabela de eventos
+        $evento = Evento::find($validatedData['id_evento']);
+
+        if ($validatedData['status'] === 'confirmado') {
+            $evento->increment('usuarios_confirmados');
+        } elseif ($validatedData['status'] === 'interessado') {
+            $evento->increment('usuarios_interessados');
+        }
+
+        return response()->json($registro, 201); // Código 201 indica criação bem-sucedida
     }
 
-    // Atualizar um registro existente
+    // Função para atualizar um registro de usuário interessado ou confirmado
     public function update(Request $request, $id)
     {
         $registro = UsuarioConfirmadoInteressado::find($id);
-    
+
         if (!$registro) {
             return response()->json(['message' => 'Registro não encontrado'], 404);
         }
-    
+
         $validatedData = $request->validate([
-            'id_evento' => 'sometimes|integer',
-            'id_usuario' => 'sometimes|integer',
-            'status' => 'sometimes|in:interessado,confirmado',
+            'status' => 'required|in:interessado,confirmado',
         ]);
-    
-        // Adiciona a data e hora atual automaticamente
-        $validatedData['data'] = now();
-    
-        $registro->update($validatedData);
-    
-        return response()->json($registro);
-    }
 
-    // Deletar um registro
-    public function destroy($id)
-    {
-        $registro = UsuarioConfirmadoInteressado::find($id);
+        $evento = Evento::find($registro->id_evento);
 
-        if (!$registro) {
-            return response()->json(['message' => 'Registro não encontrado'], 404);
+        // Atualizar contagem de interessados e confirmados com base na alteração do status
+        if ($registro->status !== $validatedData['status']) {
+            if ($registro->status === 'interessado' && $validatedData['status'] === 'confirmado') {
+                // Decrementar interessados e incrementar confirmados
+                $evento->decrement('usuarios_interessados');
+                $evento->increment('usuarios_confirmados');
+            } elseif ($registro->status === 'confirmado' && $validatedData['status'] === 'interessado') {
+                // Decrementar confirmados e incrementar interessados
+                $evento->decrement('usuarios_confirmados');
+                $evento->increment('usuarios_interessados');
+            }
         }
 
-        $registro->delete();
+        // Atualizar o registro com o novo status
+        $registro->update($validatedData);
 
-        return response()->json(['message' => 'Registro deletado com sucesso']);
+        return response()->json($registro);
     }
 }

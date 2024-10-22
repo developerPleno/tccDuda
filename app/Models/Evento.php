@@ -23,6 +23,7 @@ class Evento extends Model
         'hora_inicio',
         'valor_entrada',
         'cidade',
+        'endereco',
         'estilo',
         'foto_divulgacao',
         'id_divulgador',

@@ -31,26 +31,9 @@ class EventoDestaqueController extends Controller
             return response()->json(['message' => 'Usuário não encontrado'], 404);
         }
 
-        // Verificar se o usuário tem um pacote ativo
-        if ($usuario->pacoteAtivo()) {
-            // Verificar quantos eventos já foram destacados no mês
-            $eventosDestacados = EventoDestaque::where('id_usuario', $usuario->id)
-                ->whereMonth('data_destaque', Carbon::now()->month)
-                ->count();
-
-            // Se o limite de eventos do pacote foi atingido
-            if ($eventosDestacados >= $usuario->eventos_destaque_restantes) {
-                return response()->json(['message' => 'Você já destacou todos os eventos permitidos pelo seu pacote neste mês.'], 403);
-            }
-        } else {
-            // Verificar se o usuário já destacou um evento no mês, caso não tenha um pacote ativo
-            $eventoDestaqueMes = EventoDestaque::where('id_usuario', $usuario->id)
-                ->whereMonth('data_destaque', Carbon::now()->month)
-                ->first();
-
-            if ($eventoDestaqueMes) {
-                return response()->json(['message' => 'Você já destacou um evento este mês.'], 403);
-            }
+        // Verificar se o usuário pode destacar o evento
+        if (!(new EventoDestaque)->podeDestacarEvento($usuario)) {
+            return response()->json(['message' => 'Você não pode destacar mais eventos este mês.'], 403);
         }
 
         // Criar o destaque para o evento
@@ -61,7 +44,7 @@ class EventoDestaqueController extends Controller
         ]);
 
         // Atualizar o número de eventos restantes do pacote, se o usuário tiver um pacote ativo
-        if ($usuario->pacoteAtivo()) {
+        if ($usuario->pacote_ativo) {
             $usuario->eventos_destaque_restantes -= 1;
             $usuario->save();
         }
